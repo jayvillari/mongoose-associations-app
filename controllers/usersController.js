@@ -3,14 +3,13 @@ const User = require("../models/user").User;
 const Tweet = require("../models/user").Tweet;
 
 // INDEX (GET)
-router.get('/', (req, res)=>{
-    User.find({}, (error, allUsers)=>{
-        res.render('users/index.ejs', {
-            users: allUsers
-        });
+router.get("/", (req, res) => {
+  User.find({}, (error, allUsers) => {
+    res.render("users/index.ejs", {
+      users: allUsers,
     });
+  });
 });
-
 
 // NEW USER FORM
 router.get("/new", (req, res) => {
@@ -46,53 +45,62 @@ router.post("/:userId/tweets", (req, res) => {
   });
 });
 
-router.get('/:userId/tweets/:tweetId/edit', (req, res) => {
-    // set the value of the user and tweet ids
-    const userId = req.params.userId;
-    const tweetId = req.params.tweetId;
-    // find user in db by id
-    User.findById(userId, (err, foundUser) => {
-      // find tweet embedded in user
-      const foundTweet = foundUser.tweets.id(tweetId);
-      // update tweet text and completed with data from request body
-      res.render('tweets/edit.ejs', { foundUser, foundTweet });
+// RENDER AN EDIT FORM FOR A TWEET
+router.get("/:userId/tweets/:tweetId/edit", (req, res) => {
+  // set the value of the user and tweet ids
+  const userId = req.params.userId;
+  const tweetId = req.params.tweetId;
+  // find user in db by id
+  User.findById(userId, (err, foundUser) => {
+    // find tweet embedded in user
+    const foundTweet = foundUser.tweets.id(tweetId);
+    // update tweet text and completed with data from request body
+    res.render("tweets/edit.ejs", { foundUser, foundTweet });
+  });
+});
+
+//DELETE A USER
+router.delete('/:id', (req, res)=>{
+    User.findByIdAndRemove(req.params.id, (err)=>{
+        res.redirect('/users');
+    });
+});
+
+// UPDATE TWEET EMBEDDED IN A USER DOCUMENT
+router.put("/:userId/tweets/:tweetId", (req, res) => {
+  console.log("PUT ROUTE");
+  // set the value of the user and tweet ids
+  const userId = req.params.userId;
+  const tweetId = req.params.tweetId;
+
+  // find user in db by id
+  User.findById(userId, (err, foundUser) => {
+    // find tweet embedded in user
+    const foundTweet = foundUser.tweets.id(tweetId);
+    // update tweet text and completed with data from request body
+    foundTweet.tweetText = req.body.tweetText;
+    foundUser.save((err, savedUser) => {
+      res.redirect(`/users/${foundUser.id}`);
     });
   });
-  
-  // UPDATE TWEET EMBEDDED IN A USER DOCUMENT
-  router.put('/:userId/tweets/:tweetId', (req, res) => {
-    console.log('PUT ROUTE');
-    // set the value of the user and tweet ids
-    const userId = req.params.userId;
-    const tweetId = req.params.tweetId;
-  
-    // find user in db by id
-    User.findById(userId, (err, foundUser) => {
-      // find tweet embedded in user
-      const foundTweet = foundUser.tweets.id(tweetId);
-      // update tweet text and completed with data from request body
-      foundTweet.tweetText = req.body.tweetText;
-      foundUser.save((err, savedUser) => {
-        res.redirect(`/users/${foundUser.id}`);
-      });
+});
+
+//DELETE A SPECIFIC TWEET
+router.delete("/:userId/tweets/:tweetId", (req, res) => {
+  console.log("DELETE TWEET");
+  // set the value of the user and tweet ids
+  const userId = req.params.userId;
+  const tweetId = req.params.tweetId;
+
+  // find user in db by id
+  User.findById(userId, (err, foundUser) => {
+    // find tweet embedded in user
+    foundUser.tweets.id(tweetId).remove();
+    // update tweet text and completed with data from request body
+    foundUser.save((err, savedUser) => {
+      res.redirect(`/users/${foundUser.id}`);
     });
   });
-  
-  router.delete('/:userId/tweets/:tweetId', (req, res) => {
-    console.log('DELETE TWEET');
-    // set the value of the user and tweet ids
-    const userId = req.params.userId;
-    const tweetId = req.params.tweetId;
-  
-    // find user in db by id
-    User.findById(userId, (err, foundUser) => {
-      // find tweet embedded in user
-      foundUser.tweets.id(tweetId).remove();
-      // update tweet text and completed with data from request body
-      foundUser.save((err, savedUser) => {
-        res.redirect(`/users/${foundUser.id}`);
-      });
-    });
-  });
+});
 
 module.exports = router;
